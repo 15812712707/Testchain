@@ -1,0 +1,10 @@
+Django==5.2.18
+gunicorn==23.0.0
+whitenoise==6.12.0
+PyMySQL==1.2.3
+cryptography==50.0.2
+asgiref==3.13.0
+sqlparse==0.6.0
+packaging==26.3
+cffi==2.1.1
+pycparser==3.12

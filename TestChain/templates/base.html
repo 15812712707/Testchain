@@ -1,0 +1,41 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}TestChain · 测试管理与报告存证{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'app.css' %}">
+  <script src="{% static 'app.js' %}" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="{% url 'dashboard' %}"><span class="brand-symbol">T</span>TestChain <small>测试管理与可信存证</small></a>
+  {% if user.is_authenticated %}
+  <div class="account"><span>{{ user.username }}</span><a href="{% url 'password_change' %}">修改密码</a><form action="{% url 'logout' %}" method="post">{% csrf_token %}<button class="text-button">退出</button></form></div>
+  {% else %}<a href="{% url 'login' %}">登录</a>{% endif %}
+</header>
+<div class="layout {% if not project %}wide{% endif %}">
+{% if project %}
+<aside>
+  <a class="back" href="{% url 'dashboard' %}">← 所有项目</a>
+  <h2>{{ project.name }}</h2><span class="badge">{% if project.archived %}已归档{% else %}进行中{% endif %}</span>
+  <nav aria-label="项目导航">
+    <a href="{% url 'project' project.id %}">项目概览</a>
+    <a href="{% url 'cases' project.id %}">测试用例</a>
+    <a href="{% url 'executions' project.id %}">执行记录</a>
+    <a href="{% url 'defects' project.id %}">缺陷跟踪</a>
+    <a href="{% url 'reports' project.id %}">测试报告</a>
+    <a href="{% url 'chain' project.id %}">存证记录</a>
+    <a href="{% url 'events' project.id %}">操作日志</a>
+    {% if request.project_role == 'manager' %}<a href="{% url 'members' project.id %}">成员管理</a>{% endif %}
+  </nav>
+  <div class="aside-note">负责人：{{ project.owner.username }}<br>当前权限：{% if request.project_role == 'manager' %}管理{% elif request.project_role == 'tester' %}测试{% else %}只读{% endif %}</div>
+</aside>
+{% endif %}
+<main>
+  {% for message in messages %}<div role="status" class="notice {{ message.tags }}">{{ message }}</div>{% endfor %}
+  {% block content %}{% endblock %}
+</main>
+</div>
+<footer>TestChain · 每一次测试有记录，每一份报告可核验</footer>
+</body></html>

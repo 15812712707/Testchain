@@ -1,0 +1,2 @@
+{% extends 'base.html' %}
+{% block content %}<div class="heading"><h1>执行用例 · TC-{{ case.id }}</h1></div><div class="two-columns"><section class="panel"><h2>{{ case.title }}</h2><h3>操作步骤</h3><div class="pre">{{ case.steps }}</div><h3>预期结果</h3><div class="pre">{{ case.expected }}</div></section><section class="panel"><form method="post">{% csrf_token %}{{ form.as_p }}<button class="button">保存执行结果</button></form>{% if not project.versions.exists %}<p class="notice">请先<a href="{% url 'version_create' project.id %}">新增项目版本</a>。</p>{% endif %}</section></div>{% endblock %}

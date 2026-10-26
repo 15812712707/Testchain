@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="heading"><div><span class="eyebrow">WORKSPACE</span><h1>我的项目</h1><p class="muted">从用例执行到报告核验，在一个地方完成。</p></div><a class="button" href="{% url 'project_create' %}">＋ 创建项目</a></div>
+<form class="filters" method="get"><input name="q" value="{{ query }}" placeholder="搜索项目名称或说明" aria-label="搜索项目"><button class="button secondary">搜索</button></form>
+<div class="project-grid">{% for item in page_obj %}<a class="panel project-card" href="{% url 'project' item.id %}"><span class="badge">{% if item.archived %}已归档{% else %}进行中{% endif %}</span><h2>{{ item.name }}</h2><p>{{ item.description|default:'暂无项目说明'|truncatechars:100 }}</p><div class="card-meta">{{ item.owner.username }} · {{ item.created_at|date:'Y-m-d' }}<span>进入项目 →</span></div></a>{% empty %}<section class="panel empty"><h2>开始你的第一个项目</h2><p>创建项目后，添加版本和测试用例，再记录执行结果。</p><a href="{% url 'project_create' %}">创建项目 →</a></section>{% endfor %}</div>
+{% include 'pagination.html' %}
+{% endblock %}

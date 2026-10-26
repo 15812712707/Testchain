@@ -1,0 +1,47 @@
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: testchain
+      MYSQL_USER: testchain
+      MYSQL_PASSWORD: ${DB_PASSWORD:?请在 .env 设置 DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 设置 MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+  web:
+    build: .
+    restart: unless-stopped
+    environment:
+      DEBUG: "false"
+      SECRET_KEY: ${SECRET_KEY:?请在 .env 设置 SECRET_KEY}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-127.0.0.1,localhost}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://localhost:8000,http://127.0.0.1:8000}
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
+      DB_ENGINE: mysql
+      DB_NAME: testchain
+      DB_USER: testchain
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db
+      DB_PORT: "3306"
+      SECURE_SSL_REDIRECT: ${SECURE_SSL_REDIRECT:-false}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+volumes:
+  mysql_data:

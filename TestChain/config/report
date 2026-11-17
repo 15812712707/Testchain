@@ -1,0 +1,40 @@
+from pathlib import Path
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import transaction
+
+from .audit_log import audit
+from .crypto import fingerprint
+from .models import Project, Report
+
+
+def save_report(project, version, title, filename, data, actor, generated=False):
+    """测试报告保存入口。上传表单校验通过后，传入原文件字节。"""
+    if version.project_id != project.pk:
+        raise ValidationError("报告版本不属于当前项目。")
+
+    if not data or len(data) > settings.REPORT_MAX_BYTES:
+        raise ValidationError("报告文件不能为空，也不能超过 10 MB。")
+
+    # 报告和操作日志一起保存，任一步失败都会回滚。
+    with transaction.atomic():
+        locked_project = Project.objects.select_for_update().get(pk=project.pk)
+        if locked_project.archived:
+            raise ValidationError("项目已归档，不能保存报告。")
+
+        report = Report.objects.create(
+            project=locked_project,
+            version=version,
+            title=title,
+            filename=Path(filename.replace("\\", "/")).name[:200],
+            data=data,
+            sha256=fingerprint(data),
+            size=len(data),
+            creator=actor,
+            generated=generated,
+        )
+
+        action = "生成" if generated else "上传"
+        audit(locked_project, actor, f"{action}报告 #{report.pk}：{title}")
+        return report
